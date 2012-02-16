@@ -1,0 +1,27 @@
+pybotwar is a fun and educational game where players
+write computer programs to control simulated robots.
+
+http://pybotwar.googlecode.com/
+
+
+pybotwar uses pybox2d for the physical simulation.
+It can be run in text-only mode -- useful for longer
+tournaments -- or use pyqt or pygame for a graphical
+interface and visualization of the action.
+
+pybotwar is released under GPLv3.
+
+
+Changes in pybotwar-0.8:
+    - PyQt4 view mode is now the default
+        - (no graphics and pygame/pygsear still available)
+    - Added "robots dir" setting to make it easier to run pybotwar
+        from an installed copy, rather than from the unpacked folder
+        - logs, lineups, and db all go in robots dir
+    - automatically adds .py to robot filename if needed
+    - falls back to :memory: database if unable to open file
+    - log messages in testmode when using qt4 view
+    - made POSition sensor scale same as PING sensor
+    - fixed editor backspace between left edge and start of text
+    - fixed inability to re-open file once its window was closed
+    - fixed crash when cancelling file-open dialog

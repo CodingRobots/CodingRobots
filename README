@@ -1,0 +1,196 @@
+This is a fork of the original pybotwar. It's goal is to move the game onto the web and add social integration.
+
+pybotwar is a fun and educational game where players
+write computer programs to control simulated robots.
+
+http://pybotwar.googlecode.com
+
+
+
+INTRODUCTION
+
+Your task is to create a computer program to control a
+robot for the arena. The last robot alive is the winner.
+
+Robot programs run in separate processes from the main
+simulation, and communicate with the main program over
+standard input and standard output channels. Theoretically,
+this means that the robots could be limited in the amount
+of system access they have, and how much of the system's
+resources they can consume.
+
+CAUTION!
+Right now, that is not the case. Robot programs run
+as regular Python programs, using the regular Python
+interpreter, and can do anything any other program
+can do.
+
+In the future, I intend to implement some kind of
+sandboxing for robot programs, but that is not done.
+
+
+
+INSTALLATION
+
+Make sure the required dependencies are installed.
+
+pybotwar uses pybox2d for the physical simulation,
+and uses either pyqt or pygame and pygsear for the
+visualization.
+
+Unpack the pybotwar archive and run the program
+from the unpacked folder. No installation is needed,
+but you may need to change the configuration. See
+CONFIGURATION for details.
+
+
+
+DEPENDENCIES
+
+python:
+    http://python.org/
+        (tested with python-2.6.4)
+
+pybox2d:
+    http://pybox2d.googlecode.com/
+        (tested with pybox2d-2.0.2b1)
+
+pygame (optional):
+    http://pygame.org/
+        (tested with pygame-1.8.1)
+
+pygsear (optional -- required if using pygame):
+    http://www.nongnu.org/pygsear/
+        (tested with pygsear-0.53.2)
+
+pyqt4 (optional):
+    http://www.riverbankcomputing.co.uk/software/pyqt/
+        (tested with pyqt-4.6)
+
+
+RUNNING
+
+Run the main.py program with Python:
+
+    python main.py
+
+Use the -h option for additional help:
+
+    python main.py -h
+
+    | Usage: main.py [options]
+    |
+    | Options:
+    |   -h, --help            show this help message and exit
+    |   -T, --testmode        run in test mode
+    |   -t, --tournament      run a tournament
+    |   -n NBATTLES, --battles=NBATTLES
+    |                         number of battles in tournament
+    |   -g, --no-graphics     non graphics mode
+    |   -Q, --pyqt-graphics   enable PyQt interface
+    |   -D, --upgrade-db      upgrade database (WARNING! Deletes database!)
+
+
+CONFIGURATION
+
+The first time you run pybotwar it will create a blank
+configuration file called conf.py
+
+Look in defaults.py to see the values which can be changed.
+
+IMPORTANT NOTE!
+Windows users especially will need to change the value for
+subproc_python or the program will not run.
+
+Add a line to conf.py like ...
+
+    subproc_python = 'C:/Full/Path/To/Python26.exe'
+
+
+
+CREATING NEW ROBOTS
+
+Copy the template.py file to a new file in the robots
+folder, for example 'mynewrobot.py'
+
+Add a line to conf.py with the name of your new module:
+
+    mine = 'mynewrobot'
+
+Add your module reference to the robots list:
+
+    robots.append(mine)
+
+Or, if you only want to test your own robot:
+
+    robots = [mine]
+
+You can also run with multiple copies of the same robot:
+
+    # Three copies of example robot 1 and three of my new robot
+    robots = [r1, r1, r1, mine, mine, mine]
+
+If you want to run with only your new robot, be sure to
+run in test mode, or the battle will be over before it
+begins:
+
+    python main.py -T
+
+In your new module, add initialization code to the .initialize()
+method if needed, otherwise add a pass statement or delete the
+method.
+
+The .initialize() method is called once, immediately after the
+robot is created, and must return in less than a second or
+the robot will be placed in an error state and removed from
+the battle.
+
+Add code to generate your robot's response to the .respond()
+method.
+
+The .respond() method will be called 60 times per second as
+the battle continues and it must return in less than 0.015
+seconds or the robot will be placed in an error state and
+removed from the battle.
+
+See the robot.Robot class for useful methods to set the
+response, or the example robots for hints on how to use
+those methods.
+
+For more information, see the pybotwar wiki:
+http://code.google.com/p/pybotwar/w/list
+
+
+
+TOURNAMENTS
+
+Robots are placed in the arena at random locations and with
+random orientations. Also, many robots will use random numbers
+to determine which way to go and when to perform their actions.
+
+Therefore, each time the same set of robots are placed in the
+arena, the results may be different.
+
+To determine which robots are truly the strongest, run a
+tournament. A tournament is a series of battles run with the
+same set of robots. Statistics will be kept during the series
+and reported when the series is complete.
+
+
+
+HISTORY
+
+pybotwar was inspired by the game RobotWar that existed
+for the Apple ][ in the early 1980s. However, the method
+of coding is more akin to the style of programs used
+for the FIRST robotics competition, where a particular
+user-defined method is called repeatedly (60 times
+per second in this case) and must finish in a set
+amount of time to avoid putting the robot in to an
+error state and disabling it.
+
+RobotWar:
+http://en.wikipedia.org/wiki/RobotWar
+
+FIRST Robotics Competition:
+http://en.wikipedia.org/wiki/FIRST_Robotics
