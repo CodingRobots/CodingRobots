@@ -64,14 +64,14 @@ class Robot(object):
 
 		body = w.CreateBody(bodyDef)
 
-		shapeDef = box2d.b2PolygonShape()
+		shapeDef = box2d.b2PolygonShape(filter=box2d.b2Filter())
 		shapeDef.SetAsBox(1, 1)
 		shapeDef.density = conf.robot_density
 		shapeDef.friction = conf.robot_friction
 		shapeDef.restitution = conf.robot_restitution
 		shapeDef.filter.groupIndex = -self.n
-		body.CreateShape(shapeDef)
-		body.SetMassFromShapes()
+		body.CreateFixturesFromShapes(shapes=shapeDef)
+		body.ResetMassData()
 
 		body.userData['actor'] = self
 		body.userData['kind'] = 'robot'
@@ -86,14 +86,14 @@ class Robot(object):
 		turretDef.angularDamping = 0
 		turret = w.CreateBody(bodyDef)
 
-		shapeDef = box2d.b2PolygonDef()
+		shapeDef = box2d.b2PolygonShape(filter=box2d.b2Filter())
 		shapeDef.SetAsBox(.1, .1)
 		shapeDef.density = 1
 		shapeDef.friction = 0
 		shapeDef.restitution = 0
 		shapeDef.filter.groupIndex = -self.n
-		turret.CreateShape(shapeDef)
-		turret.SetMassFromShapes()
+		turret.CreateFixturesFromShapes(shapes=shapeDef)
+		turret.ResetMassData()
 		self.turret = turret
 
 		jointDef = box2d.b2RevoluteJointDef()
@@ -101,7 +101,7 @@ class Robot(object):
 		jointDef.maxMotorTorque = conf.turret_maxMotorTorque
 		jointDef.motorSpeed = 0.0
 		jointDef.enableMotor = True
-		self.turretjoint = w.CreateJoint(jointDef).getAsType()
+		self.turretjoint = w.CreateJoint(jointDef)
 		self._turretangletarget = 0
 
 		v = wld.v.addrobot(pos, ang)
@@ -123,12 +123,13 @@ class Robot(object):
 
 	def get_turretangle(self):
 		'return turret angle in degrees.'
-		degrees = int(round((180 / pi) * self.turretjoint.GetJointAngle()))
+		print dir(self.turretjoint)
+		degrees = int(round((180 / pi) * self.turretjoint.angle))
 		return degrees
 
 	def turretcontrol(self):
 		joint = self.turretjoint
-		angleError = joint.GetJointAngle() - self._turretangletarget
+		angleError = joint.angle - self._turretangletarget
 		gain = 0.5
 		joint.SetMotorSpeed(-gain * angleError)
 
@@ -250,7 +251,6 @@ class World(object):
 		aabb.upperBound = (halfx, halfy)
 
 		self.w = box2d.b2World(aabb=aabb, gravity=gravity, doSleep=doSleep, contactListener=cl)
-		print dir(self.w)
 		body = self.w.CreateStaticBody(userData={'actor': None})
 		#self.w.GetGroundBody().SetUserData({'actor': None})
 

@@ -20,7 +20,7 @@ import os
 from threading import Thread
 from time import sleep
 
-import util
+from util import get_robot_dirs
 from util import defaultNonedict
 
 import conf
@@ -83,7 +83,7 @@ def get_response(r, sensors):
     try:
         r.sensors = sensors
         r.respond()
-    except Exception, e:
+    except Exception as e:
         r.err()
         import traceback
         tb = traceback.format_exc()
@@ -121,7 +121,7 @@ def communicate(r):
 
 def robot_logfile(robotname):
     logfilename = '%s.log' % robotname
-    rdirs = util.get_robot_dirs()
+    rdirs = get_robot_dirs()
     robotsdir = rdirs[0]
     logdir = os.path.join(robotsdir, conf.logdir)
     try:
@@ -176,7 +176,7 @@ def build_robot(modname, robotname, testmode, rbox):
 
 
 if __name__ == '__main__':
-    rdirs = util.get_robot_dirs()
+    rdirs = get_robot_dirs()
     import sys
     for d in rdirs:
         sys.path.append(d)
