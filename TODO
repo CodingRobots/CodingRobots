@@ -5,12 +5,10 @@ additional components:
     distance traveled sensor
     proximity sensor
     touch sensor
-
 debug mode (show sensors and actions)
 other game types (race, find/collect objects, maze)
 document how to write robot programs
 may be pinging own bullets?
-
 
 qt4view
     allow external editor

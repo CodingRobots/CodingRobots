@@ -1,5 +1,5 @@
 # Robot subprocess
-subproc_python = 'python'
+subproc_python = '/usr/bin/python'
 subproc_main = 'control.py'
 
 init_timeout = 1.0
@@ -17,11 +17,11 @@ r6 = 'robot06'
 r7 = 'robot07'
 robots = [r2, r4, r5, r6, r7]
 
-logdir = 'logs' # relative to robot_dirs[0]
+logdir = 'robots/logs'
 
 template = 'robots/template.py'
 
-lineups = 'lineups' # relative to robot_dirs[0]
+lineups = 'robots/lineups'
 
 
 # Game
@@ -73,9 +73,8 @@ bullet_density = .2
 
 
 # Statistics
-dbfile = 'stats.db' # relative to robot_dirs[0]
+dbfile = 'stats.db'
 
 
 # Other
 help_url = 'http://code.google.com/p/pybotwar/wiki/Programming'
-memache_uri = "placeholder"

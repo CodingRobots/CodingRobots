@@ -29,25 +29,11 @@ except ImportError:
 
     raise SystemExit
 
-import util
 import viewselect
-
-
-def setup_logging(level='info'):
-    import logging
-    import logging.handlers
-    logger = logging.getLogger('PybotwarLogger')
-    logger.setLevel(logging.INFO)
-    handler = logging.handlers.RotatingFileHandler(
-              'appdebug.log', maxBytes=1000000, backupCount=3)
-    logger.addHandler(handler)
-
 
 if __name__ == '__main__':
     import sys
     import os
-
-    os.chdir(os.path.split(os.path.abspath(__file__))[0])
 
     from optparse import OptionParser
     parser = OptionParser()
@@ -66,18 +52,9 @@ if __name__ == '__main__':
     parser.add_option("-Q", "--pyqt-graphics", dest="pyqtgraphics",
                     action="store_true", default=False,
                     help="enable PyQt interface")
-    parser.add_option("-P", "--pygsear-graphics", dest="pygseargraphics",
-                    action="store_true", default=False,
-                    help="enable Pygsear interface")
     parser.add_option("-D", "--upgrade-db", dest="upgrade_db",
                     action="store_true", default=False,
                     help="upgrade database (WARNING! Deletes database!)")
-    parser.add_option("-S", "--reset-qt-settings", dest="qtreset",
-                    action="store_true", default=False,
-                    help="reset Qt settings")
-    parser.add_option("-B", "--app-debug", dest="appdebug",
-                    action="store_true", default=False,
-                    help="enable app debug log")
 
     (options, args) = parser.parse_args()
 
@@ -86,30 +63,14 @@ if __name__ == '__main__':
     nbattles = options.nbattles
     nographics = options.nographics
     pyqtgraphics = options.pyqtgraphics
-    pygseargraphics = options.pygseargraphics
     upgrade_db = options.upgrade_db
-    qtreset = options.qtreset
-    appdebug = options.appdebug
 
-    gmodes = nographics + pyqtgraphics + pygseargraphics
 
-    if appdebug:
-        setup_logging()
-
-    if gmodes > 1:
-        print 'must select ONE of -g, -Q, or -P'
-        import sys
-        sys.exit(0)
-
-    elif nographics:
+    if nographics:
         viewselect.select_view_module('none')
-    elif pyqtgraphics:
-        viewselect.select_view_module('pyqt')
-    elif pygseargraphics:
+    elif not pyqtgraphics:
         viewselect.select_view_module('pygame')
     else:
-        # default view type is PyQt
-        pyqtgraphics = True
         viewselect.select_view_module('pyqt')
 
 view = viewselect.get_view_module()
@@ -130,27 +91,20 @@ def dbcheck():
         sys.exit(0)
 
 
-def reset_qt_settings():
-    from PyQt4 import QtCore
-    QtCore.QCoreApplication.setOrganizationName('pybotwar.googlecode.com')
-    QtCore.QCoreApplication.setOrganizationDomain('pybotwar.googlecode.com')
-    QtCore.QCoreApplication.setApplicationName('pybotwar')
-    settings = QtCore.QSettings()
-    settings.clear()
-    print 'Qt settings cleared.'
-
 
 def runmain():
-    if qtreset:
-        reset_qt_settings()
-
     if upgrade_db:
-        print 'Upgrading Database'
         stats.dbremove()
         stats.initialize()
-        return
 
     dbcheck()
+
+    global testmode
+    if testmode:
+        if not os.path.exists(conf.logdir):
+            print 'Log directory does not exist:', conf.logdir
+            print 'test mode disabled'
+            testmode = False
 
     stats.dbopen()
 
@@ -175,7 +129,7 @@ def runmain():
 
     elif pyqtgraphics:
         import qt4view
-        qt4view.run(testmode)
+        qt4view.run()
 
     else:
         game = Game(testmode)
@@ -183,23 +137,11 @@ def runmain():
 
     stats.dbclose()
 
-    if not tournament:
-        stats.dbopen()
-        stats.top10()
-
-
     # Clean up log directory if not in test mode
-    rdirs = util.get_robot_dirs()
-    robotsdir = rdirs[0]
-    logdir = os.path.join(robotsdir, conf.logdir)
-
-    if not testmode and os.path.exists(logdir):
-        for f in os.listdir(logdir):
-            fpath = os.path.join(logdir, f)
-            try:
-                os.remove(fpath)
-            except OSError:
-                pass
+    if not testmode and os.path.exists(conf.logdir):
+        for f in os.listdir(conf.logdir):
+            fpath = os.path.join(conf.logdir, f)
+            os.remove(fpath)
 
 
 if __name__ == '__main__':

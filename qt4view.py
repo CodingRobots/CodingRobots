@@ -20,15 +20,10 @@ import os
 import sys
 import math
 pi = math.pi
-
-import logging
-logger = logging.getLogger('PybotwarLogger')
-
 from PyQt4 import QtCore, QtGui, QtSvg, uic
 from editor import TextEditor
 from combatants import CombatantsEditor
 
-import util
 import stats
 import conf
 
@@ -47,9 +42,8 @@ MWClass, _ = uic.loadUiType(uipath)
 
 
 class MainWindow(QtGui.QMainWindow):
-    def __init__(self, app, testmode):
+    def __init__(self, app):
         self.app = app
-        self.testmode = testmode
         self.paused = False
 
         QtGui.QMainWindow.__init__(self)
@@ -64,15 +58,12 @@ class MainWindow(QtGui.QMainWindow):
 
         self.start_game()
 
-        self.debug_robot = None
         self.singleStep()
 
         self.ticktimer = self.startTimer(17)
 
         self.editors = []
         self._fdir = None
-
-        self.setup_settings()
 
         # Call resize a bit later or else view will not resize properly
         self._initialresize = True
@@ -81,7 +72,7 @@ class MainWindow(QtGui.QMainWindow):
     def start_game(self):
         import game
 
-        self.game = game.Game(self.testmode)
+        self.game = game.Game()
         self.game.w.v.scene = self.scene
         self.game.w.v.app = self.app
         self.game.w.v.rinfo = self.ui.rinfo
@@ -127,14 +118,10 @@ class MainWindow(QtGui.QMainWindow):
     def singleStep(self):
         self.pauseBattle(True)
         self.game.tick()
-        if self.debug_robot is not None:
-            self.update_debug_robot()
 
     def timerEvent(self, ev):
         if not self.paused:
             self.game.tick()
-            if self.debug_robot is not None:
-                self.update_debug_robot()
             if not self.game.rnd%60:
                 self.ui.countdown.display(self.ui.countdown.value()-1)
 
@@ -184,8 +171,7 @@ class MainWindow(QtGui.QMainWindow):
         if efdir is not None:
             fdir = efdir
         elif self._fdir is None:
-            rdirs = util.get_robot_dirs()
-            fdir = QtCore.QString(os.path.abspath(rdirs[0]))
+            fdir = QtCore.QString(os.path.abspath(conf.robot_dirs[0]))
         else:
             fdir = self._fdir
 
@@ -194,10 +180,7 @@ class MainWindow(QtGui.QMainWindow):
             # Check to see if the file is already open in an editor
             for ed in self.editors:
                 if ed._filepath == fp:
-                    # If it is not visible, show it
-                    if not ed.isVisible():
-                        ed.show()
-                    # raise the window and get out
+                    # If it is, raise the window and get out
                     ed.activateWindow()
                     ed.raise_()
                     return
@@ -207,9 +190,9 @@ class MainWindow(QtGui.QMainWindow):
             te.openfile(fp)
             te.show()
 
-            if efdir is None:
-                # Opening from Main Window. Remember directory.
-                self._fdir = te._fdir
+        if efdir is None:
+            # Opening from Main Window. Remember directory.
+            self._fdir = te._fdir
 
     def newRobot(self):
         te = TextEditor(self)
@@ -255,130 +238,11 @@ class MainWindow(QtGui.QMainWindow):
         self.singleStep()
         self.pauseBattle(paused)
 
-    def settings(self):
-        self.sui = Settings()
-        self.sui.show()
-
     def help(self):
         QtGui.QDesktopServices().openUrl(QtCore.QUrl(conf.help_url))
 
     def about(self):
         AboutDialog().exec_()
-
-    def setup_settings(self):
-        rdirs = util.get_robot_dirs()
-        d = rdirs[0]
-        self._fdir = d
-
-    def enable_debug(self):
-        if self.ui.actionEnableDebug.isChecked():
-            self.game.enable_debug()
-            self.ag = QtGui.QActionGroup(self.ui.menuDebug)
-            self.ag.triggered.connect(self.choose_robot_debug)
-            items = self.game.models.items()
-            for robotname, model in items:
-                ac = QtGui.QAction(robotname, self.ag)
-                ac.setCheckable(True)
-                self.ui.menuDebug.addAction(ac)
-        else:
-            self.game.disable_debug()
-            for ac in self.ag.actions():
-                self.ui.menuDebug.removeAction(ac)
-            self.debug_robot = None
-
-    def choose_robot_debug(self):
-        if self.debug_robot is not None:
-            self.debug_robot_window.destroy()
-        rname = self.ag.checkedAction().text()
-        self.debug_robot = str(rname)
-        self.debug_robot_window = RDebug(rname)
-        self.debug_robot_window.show()
-
-    def update_debug_robot(self):
-        game = self.game
-        model = game.models[self.debug_robot]
-        body = model.body
-        window = self.debug_robot_window
-
-        tick = str(game.rnd)
-        window.tick.setText(tick)
-
-        pos = body.position
-        x, y = int(pos.x), int(pos.y)
-        window.posx.setValue(x)
-        window.posy.setValue(y)
-
-        tur = str(model.get_turretangle())
-        window.turret.setText(tur)
-
-        pingtype = str(model._pingtype)
-        pingangle = str(model._pingangle)
-        pingdistance = str(model._pingdist)
-        window.pingtype.setText(pingtype)
-        window.pingangle.setText(pingangle)
-        window.pingdistance.setText(pingdistance)
-
-        gyro = str(model.gyro())
-        window.gyro.setText(gyro)
-
-        heat = int(model._cannonheat)
-        window.cannonheat.setValue(heat)
-
-        loading = str(model._cannonreload)
-        window.cannonloading.setText(loading)
-
-        pinged = str(model._pinged == game.rnd - 1)
-        window.pinged.setText(pinged)
-
-
-class RDebug(QtGui.QDialog):
-    def __init__(self, rname):
-        QtGui.QDialog.__init__(self)
-        uifile = 'debug.ui'
-        uipath = os.path.join(uidir, uifile)
-        uic.loadUi(uipath, self)
-        self.rname.setText(rname)
-
-class Settings(QtGui.QDialog):
-    def __init__(self):
-        QtGui.QDialog.__init__(self)
-        uifile = 'settings.ui'
-        uipath = os.path.join(uidir, uifile)
-        uic.loadUi(uipath, self)
-
-        settings = QtCore.QSettings()
-        self.settings = settings
-        d = settings.value('pybotwar/robotdir', self.robotdir.text()).toString()
-
-        self.robotdir.setText(d)
-
-    def browse(self):
-        d = QtGui.QFileDialog.getExistingDirectory(
-                self,
-                'Set Robot dir',
-                self.robotdir.text())
-        self.robotdir.setText(d)
-
-    def accept(self):
-        d = self.robotdir.text()
-        settings = QtCore.QSettings()
-        settings.setValue('pybotwar/robotdir', d)
-        if d and d not in conf.robot_dirs:
-            conf.robot_dirs.insert(0, str(d))
-
-        stats.dbclose(restart=True)
-        if not stats.dbcheck():
-            QtGui.QMessageBox.warning(self, 'DB Version Mismatch', 'Database version mismatch.\n\nUpgrade database with -D switch.')
-            conf.robot_dirs.pop(0)
-            settings.remove('pybotwar/robotdir')
-            stats.dbclose(restart=True)
-            stats.dbcheck()
-        stats.dbopen()
-
-        QtGui.QDialog.accept(self)
-
-    def reject(self):
-        QtGui.QDialog.reject(self)
 
 
 class NotImplementedYet(QtGui.QDialog):
@@ -561,9 +425,9 @@ class RobotInfo(QtGui.QHBoxLayout):
         icon.fill(QtCore.Qt.transparent)
         self.icon = icon
         painter = QtGui.QPainter(icon)
+        self.painter = painter # need to hold this or Qt throws an error
         imageid = 'r{0:02d}'.format(n)
         rend.render(painter, imageid)
-        painter.end()
         iconl = QtGui.QLabel()
         iconl.setPixmap(icon)
 
@@ -692,20 +556,20 @@ class Splash(QtGui.QSplashScreen):
         img.fill(QtCore.Qt.transparent)
         self.img = img
         painter = QtGui.QPainter(img)
+        self.painter = painter # need to hold this or Qt throws an error
         rend.render(painter, 'splash')
-        painter.end()
         QtGui.QSplashScreen.__init__(self, img)
         self.setMask(img.mask())
 
 
 
-def run(testmode):
+def run():
     app = QtGui.QApplication(sys.argv)
 
     splash = Splash(app)
     splash.show()
 
-    win = MainWindow(app, testmode)
+    win = MainWindow(app)
     win.show()
     splash.finish(win)
     app.exec_()

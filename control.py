@@ -20,7 +20,6 @@ import os
 from threading import Thread
 from time import sleep
 
-from util import get_robot_dirs
 from util import defaultNonedict
 
 import conf
@@ -70,20 +69,13 @@ def loop(r, i):
     else:
         _overtime_count = 0
 
-    rresponse = r.response
-
-    if rresponse == 'LOG':
-        start_logging(r)
-    elif rresponse == 'NOLOG':
-        stop_logging(r)
-
-    return response or rresponse
+    return response or r.response
 
 def get_response(r, sensors):
     try:
         r.sensors = sensors
         r.respond()
-    except Exception as e:
+    except Exception, e:
         r.err()
         import traceback
         tb = traceback.format_exc()
@@ -94,12 +86,6 @@ def communicate(r):
         line = sys.stdin.readline().strip()
         if line == 'FINISH':
             break
-        elif line == 'DEBUG':
-            start_logging(r)
-            continue
-        elif line == 'NODEBUG':
-            stop_logging(r)
-            continue
 
         o = loop(r, line)
         if o is not None:
@@ -119,32 +105,12 @@ def communicate(r):
             break
 
 
-def robot_logfile(robotname):
-    logfilename = '%s.log' % robotname
-    rdirs = get_robot_dirs()
-    robotsdir = rdirs[0]
-    logdir = os.path.join(robotsdir, conf.logdir)
-    try:
-        if not os.path.exists(logdir):
-            os.mkdir(logdir)
-        logfilepath = os.path.join(logdir, logfilename)
-        logfile = open(logfilepath, 'a')
-    except (IOError, OSError):
-        logfile = None
-    return logfile
-
-def start_logging(robot):
-    logfile = robot_logfile(robot.name)
-    robot.logfile = logfile
-
-def stop_logging(robot):
-    robot.logfile = None
-
-
 def build_robot(modname, robotname, testmode, rbox):
 
     if testmode:
-        logfile = robot_logfile(robotname)
+        logfilename = '%s.log' % robotname
+        logfilepath = os.path.join(conf.logdir, logfilename)
+        logfile = open(logfilepath, 'a')
     else:
         logfile = None
 
@@ -176,9 +142,8 @@ def build_robot(modname, robotname, testmode, rbox):
 
 
 if __name__ == '__main__':
-    rdirs = get_robot_dirs()
     import sys
-    for d in rdirs:
+    for d in conf.robot_dirs:
         sys.path.append(d)
 
     if len(sys.argv) != 4:
