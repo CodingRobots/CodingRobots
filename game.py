@@ -32,11 +32,12 @@ import conf
 import memcache
 
 class Game(object):
-	def __init__(self, testmode=False, tournament=None, gameID=0):
+	def __init__(self, testmode=False, tournament=None, gameID=0, robots=[]):
 		self.testmode = testmode
 		self.tournament = tournament
 		self.game_id = gameID
 		self.mc = memcache.Client(['127.0.0.1:11211'],debug=0)
+		self.givenRobots = robots
 
 		self.models = {}
 		self.procs = {}
@@ -59,7 +60,11 @@ class Game(object):
 		self.finish()
 
 	def load_robots(self):
-		robots = conf.robots
+		if self.givenRobots == []:
+			robots = conf.robots
+		else:
+			robots = self.givenRobots
+
 		for robot in robots:
 			robotname = robot
 			while robotname in self.w.robots:
@@ -221,7 +226,7 @@ class Game(object):
 		w.step()
 		#Send shit to memcached
 		worldJson = w.to_json()
-		self.mc.set('world_state', worldJson)
+		self.mc.set('world_state_%s' % self.gameID, worldJson)
 		if not rnd%60:
 			print '%s seconds (%s real)' % (rnd/60, int(time.time())-self.t0)
 		self.rnd += 1
