@@ -110,9 +110,9 @@ class Robot(object):
 		self.i = i
 	def to_dict(self):
 		roboDict = {}
-		roboDict['position'] = self.position
+		roboDict['position'] = self.body.position
 		roboDict['rotation'] = self.gyro()
-		roboDict['turrent_angle'] = self.get_turrentangle()
+		roboDict['turrent_angle'] = self.get_turretangle()
 		return roboDict
 
 	def gyro(self):
@@ -194,6 +194,7 @@ class Bullet(object):
 		bulletDict = {}
 		bulletDict['position'] = self.body.position
 		bulletDict['angle'] = self.body.angle
+		bulletDict['exploding'] = self._exploding
 		return bulletDict
 
 	def explode(self):

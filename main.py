@@ -35,7 +35,7 @@ if __name__ == '__main__':
 	import sys
 	import os
 
-	from oztparse import OptionParser
+	from optparse import OptionParser
 	parser = OptionParser()
 	parser.add_option("-T", "--testmode", dest="testmode",
 					action="store_true", default=False,
@@ -55,10 +55,10 @@ if __name__ == '__main__':
 	parser.add_option("-D", "--upgrade-db", dest="upgrade_db",
 					action="store_true", default=False,
 					help="upgrade database (WARNING! Deletes database!)")
-	parser.add_options("-R", "--robots", dest="robots",
+	parser.add_option("-R", "--robots", dest="robots",
 			action="store", type='str', default='',
 					help="Specify which robots to battle")
-	parser.add_options("-I", "--gameid", dest="gameid",
+	parser.add_option("-I", "--gameid", dest="gameid",
 					action="store",type='int',default=0,
 					help="Specify the game id for storing data in memcached")
 
