@@ -1,4 +1,4 @@
-#Copyright 2009 Lee Harr
+# Copyright 2009 Lee Harr
 #
 # This file is part of pybotwar.
 #
@@ -21,9 +21,6 @@ from subprocess import PIPE
 import time
 import random
 
-import logging
-logger = logging.getLogger('PybotwarLogger')
-
 import viewselect
 view = viewselect.get_view_module()
 
@@ -32,12 +29,14 @@ from world import box2d
 
 import stats
 import conf
-import json
+import memcache
 
 class Game(object):
-	def __init__(self, testmode=False, tournament=None):
+	def __init__(self, testmode=False, tournament=None, gameID=0):
 		self.testmode = testmode
 		self.tournament = tournament
+		self.game_id = gameID
+		self.mc = memcache.Client(['127.0.0.1:11211'],debug=0)
 
 		self.models = {}
 		self.procs = {}
@@ -45,14 +44,11 @@ class Game(object):
 		self.timeouts = {}
 		self.rnd = 0
 
-		self.cl = world.CL
-		self.w = world.World(self.cl())
+		self.w = world.World()
+		self.cl = world.CL()
+		self.w.w.SetContactListener(self.cl)
 		self.cl.w = self.w
-		self.states = {}
-		"""
-		State format:
-		[{botname: {location:vector, direction:float, shotfire:bool,hp:int,hit:bool}}]
-		"""
+
 	def run(self):
 		self.load_robots()
 		while ((self.testmode and not self.tournament)
@@ -102,25 +98,10 @@ class Game(object):
 			if robotname not in self.procs:
 				continue
 
-			proc = procs[robotname]
-
-			if model._enable_debug is None:
-				pass
-			elif model._enable_debug:
-				line = 'DEBUG\n'
-				proc.stdin.write(line)
-				model._enable_debug = None
-				continue
-			else:
-				line = 'NODEBUG\n'
-				proc.stdin.write(line)
-				model._enable_debug = None
-				continue
-
 			health = model.health
 			body = model.body
 			pos = body.position
-			possens = '%s;%s' % (int(pos.x), int(pos.y))
+			possens = '%s;%s' % (int(pos.x*10), int(pos.y*10))
 			tur = model.get_turretangle()
 			ping = '%s;%s;%s' % (model._pingtype,
 									model._pingangle,
@@ -131,6 +112,9 @@ class Game(object):
 			pinged = int(model._pinged == rnd - 1)
 			line = 'TICK:%s|HEALTH:%s|POS:%s|TUR:%s|PING:%s|GYRO:%s|HEAT:%s|LOADING:%s|PINGED:%s\n' % (rnd, health, possens, tur, ping, gyro, heat, loading, pinged)
 			#print robotname, line
+
+			proc = procs[robotname]
+
 			if not model.alive:
 				model._kills = nrobots - len(procs)
 				del procs[robotname]
@@ -139,7 +123,6 @@ class Game(object):
 				proc.stdin.close()
 				proc.stdout.close()
 				proc.kill()
-				time.sleep(0.1)
 				continue
 
 			proc.stdin.write(line)
@@ -147,7 +130,6 @@ class Game(object):
 				result = proc.stdout.readline().strip()
 			except IOError:
 				print 'ERROR with', robotname
-				continue
 
 			if result == 'TIMEOUT':
 				timeouts[robotname] += 1
@@ -237,38 +219,13 @@ class Game(object):
 
 
 		w.step()
-		robotStates = {}
-		for bot in w.robots:
-			theBotDict = {}
-			theBotDict['health'] = bot.health
-			theBotDict['rotation'] = bot.gyro()
-			theBotDict['position'] = bot.body.position
-			theBotDict['turretangle'] = bot.get_turretangle()
-			robotStates[bot.name] = theBotDict
-		bulletStates = []
-		for bullet in w.bullets:
-			theBulletDict = {}
-			theBulletDict['exploding'] = bullet._exploding
-			theBulletDict['position'] = bullet.body.position
-			theBulletDict['angle'] = bullet.body.angle
-			bulletStates.append(theBulletDict)
-		spriteStates = []
-		for sprite in w.sprites:
-			spriteStates = {'kind':sprite.body.kind, 'position':sprite.body.position}
-		self.states.append({'robots':robotStates,'bullets':bulletStates,'sprites':spriteStates})
+		#Send shit to memcached
+		worldJson = w.to_json()
+		self.mc.set('world_state', worldJson)
 		if not rnd%60:
 			print '%s seconds (%s real)' % (rnd/60, int(time.time())-self.t0)
 		self.rnd += 1
 
-	def enable_debug(self):
-		items = self.models.items()
-		for robotname, model in items:
-			model._enable_debug = True
-
-	def disable_debug(self):
-		items = self.models.items()
-		for robotname, model in items:
-			model._enable_debug = False
 
 	def finish(self):
 		print 'FINISHING'
@@ -295,7 +252,6 @@ class Game(object):
 			for model in alive:
 				print '   ', model.name
 		else:
-			print 'Test mode ended'
 			winner = None
 
 		for robotname, model in models.items():
@@ -325,4 +281,3 @@ class Game(object):
 				stats.tournament_update(tournament, model.kind, model.name, win,
 												nrobots-1, model._kills,
 												model._damage_caused)
-		print len(self.states)

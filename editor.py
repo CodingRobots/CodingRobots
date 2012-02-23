@@ -24,7 +24,6 @@ import sys
 from PyQt4 import QtCore, QtGui, uic
 from PyQt4.Qt import QFrame, QWidget, QHBoxLayout, QPainter
 
-import util
 import conf
 
 import highlightedtextedit
@@ -102,8 +101,6 @@ class TextEditor(QtGui.QMainWindow):
             return self.savefile()
 
     def savecheck(self):
-        'Check the saved file for errors and importability.'
-
         filepath = self._filepath
         fdir, fname = os.path.split(str(filepath))
         if fname.endswith('.py'):
@@ -140,18 +137,9 @@ class TextEditor(QtGui.QMainWindow):
             msgbox = QtGui.QMessageBox.information(self, title, msg)
 
     def saveAs(self):
-        if self._fdir is None:
-            rdirs = util.get_robot_dirs()
-            fdir = QtCore.QString(os.path.abspath(rdirs[0]))
-            self._fdir = fdir
-        else:
-            fdir = self._fdir
+        fdir = QtCore.QString(os.path.abspath(conf.robot_dirs[0]))
         filepath = QtGui.QFileDialog.getSaveFileName(self, 'Save Robot As', fdir)
-        filepath = str(filepath)
         if filepath:
-            root, ext = os.path.splitext(filepath)
-            if ext != '.py':
-                filepath = root + '.py'
             self._filepath = filepath
             return self.savefile()
         else:
@@ -320,8 +308,6 @@ class HighlightedTextEdit(highlightedtextedit.HighlightedTextEdit):
             elif k == Backtab:
                 curs.setPosition(blk0, 0)
                 self.setTextCursor(curs)
-            else:
-                QtGui.QTextEdit.keyPressEvent(self, ev)
 
         else:
             QtGui.QTextEdit.keyPressEvent(self, ev)

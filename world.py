@@ -24,6 +24,7 @@ pi = 3.1415927410125732
 import conf
 
 import viewselect
+import json
 view = viewselect.get_view_module()
 
 
@@ -39,8 +40,6 @@ class Robot(object):
 		self.health = conf.maxhealth
 		self.kind = kind
 		self.name = name
-
-		self._enable_debug = None
 
 		self._pingtype = 'w'
 		self._pingangle = 0
@@ -64,14 +63,14 @@ class Robot(object):
 
 		body = w.CreateBody(bodyDef)
 
-		shapeDef = box2d.b2PolygonShape(filter=box2d.b2Filter())
+		shapeDef = box2d.b2PolygonDef()
 		shapeDef.SetAsBox(1, 1)
 		shapeDef.density = conf.robot_density
 		shapeDef.friction = conf.robot_friction
 		shapeDef.restitution = conf.robot_restitution
 		shapeDef.filter.groupIndex = -self.n
-		body.CreateFixturesFromShapes(shapes=shapeDef)
-		body.ResetMassData()
+		body.CreateShape(shapeDef)
+		body.SetMassFromShapes()
 
 		body.userData['actor'] = self
 		body.userData['kind'] = 'robot'
@@ -86,14 +85,14 @@ class Robot(object):
 		turretDef.angularDamping = 0
 		turret = w.CreateBody(bodyDef)
 
-		shapeDef = box2d.b2PolygonShape(filter=box2d.b2Filter())
+		shapeDef = box2d.b2PolygonDef()
 		shapeDef.SetAsBox(.1, .1)
 		shapeDef.density = 1
 		shapeDef.friction = 0
 		shapeDef.restitution = 0
 		shapeDef.filter.groupIndex = -self.n
-		turret.CreateFixturesFromShapes(shapes=shapeDef)
-		turret.ResetMassData()
+		turret.CreateShape(shapeDef)
+		turret.SetMassFromShapes()
 		self.turret = turret
 
 		jointDef = box2d.b2RevoluteJointDef()
@@ -101,7 +100,7 @@ class Robot(object):
 		jointDef.maxMotorTorque = conf.turret_maxMotorTorque
 		jointDef.motorSpeed = 0.0
 		jointDef.enableMotor = True
-		self.turretjoint = w.CreateJoint(jointDef)
+		self.turretjoint = w.CreateJoint(jointDef).getAsType()
 		self._turretangletarget = 0
 
 		v = wld.v.addrobot(pos, ang)
@@ -109,6 +108,12 @@ class Robot(object):
 
 		i = wld.v.addrobotinfo(self.n, name)
 		self.i = i
+	def to_dict(self):
+		roboDict = {}
+		roboDict['position'] = self.position
+		roboDict['rotation'] = self.gyro()
+		roboDict['turrent_angle'] = self.get_turrentangle()
+		return roboDict
 
 	def gyro(self):
 		'return robot angle wrt world in degrees.'
@@ -123,13 +128,12 @@ class Robot(object):
 
 	def get_turretangle(self):
 		'return turret angle in degrees.'
-		print dir(self.turretjoint)
-		degrees = int(round((180 / pi) * self.turretjoint.angle))
+		degrees = int(round((180 / pi) * self.turretjoint.GetJointAngle()))
 		return degrees
 
 	def turretcontrol(self):
 		joint = self.turretjoint
-		angleError = joint.angle - self._turretangletarget
+		angleError = joint.GetJointAngle() - self._turretangletarget
 		gain = 0.5
 		joint.SetMotorSpeed(-gain * angleError)
 
@@ -186,11 +190,16 @@ class Bullet(object):
 
 		v = wld.v.addbullet(pos)
 		self.v = v
+	def to_dict(self):
+		bulletDict = {}
+		bulletDict['position'] = self.body.position
+		bulletDict['angle'] = self.body.angle
+		return bulletDict
 
 	def explode(self):
 		self._exploding = 1
 
-		robot = self.body.userData['shooter'].name
+		#robot = self.body.userData['shooter'].name
 		#print robot,'bullet explode at', self.body.position
 
 		for ring, radius in enumerate(conf.explosion_radii):
@@ -211,20 +220,28 @@ class Wall(object):
 		walldef = box2d.b2BodyDef()
 		walldef.position = pos
 		walldef.userData = {}
-		wallshp = box2d.b2PolygonShape()
-		width, height = size
-		wallshp.SetAsBox(width, height)
-		wallbod = w.CreateBody(walldef,shape=wallshp)
+		wallbod = w.CreateBody(walldef)
 		wallbod.userData['actor'] = None
 		wallbod.userData['kind'] = 'wall'
 		wallbod.iswall = True
+		wallshp = box2d.b2PolygonDef()
+		width, height = size
+		wallshp.SetAsBox(width, height)
+		wallbod.CreateShape(wallshp)
 		self.body = wallbod
+		self.width = size[0]
+		self.height = size[1]
 		v = view.Wall(pos, size)
 		self.v = v
-
+	def to_dict(self):
+		wallDict = {}
+		wallDict['position'] = self.body.position
+		wallDict['width'] = self.width
+		wallDict['height'] = self.height
+		return wallDict
 
 class World(object):
-	def __init__(self,cl):
+	def __init__(self):
 		self.count = 1000
 		self.force = 10
 
@@ -250,9 +267,8 @@ class World(object):
 		aabb.lowerBound = (-halfx, -halfy)
 		aabb.upperBound = (halfx, halfy)
 
-		self.w = box2d.b2World(aabb=aabb, gravity=gravity, doSleep=doSleep, contactListener=cl)
-		body = self.w.CreateStaticBody(userData={'actor': None})
-		#self.w.GetGroundBody().SetUserData({'actor': None})
+		self.w = box2d.b2World(aabb, gravity, doSleep)
+		self.w.GetGroundBody().SetUserData({'actor': None})
 
 		self.makearena()
 
@@ -446,7 +462,7 @@ class World(object):
 		self.makerobot('R3', (0, 4), pi)
 		self.makerobot('R4', (0, -4), 0)
 
-		self.makerobot('R6', (5, 6), pi)
+		self.makerobot('R5', (4, 4), pi)
 		self.makerobot('R6', (-4, 4), 0)
 		self.makerobot('R7', (-4, -4), pi)
 		self.makerobot('R8', (4, -4), 0)
@@ -492,6 +508,16 @@ class World(object):
 				#print name, 'shoots'
 				self.makebullet(name)
 
+	def to_json(self):
+		bullets = [b.to_dict() for b in self.bullets]
+		robots = [r.to_dict() for r in self.robots.items()]
+		sprites = [s.to_dict() for s in self.sprites]
+		worldDict = {
+				'bullets': bullets,
+				'robots': robots,
+				'sprites': sprites
+				}
+		return json.dumps(worldDict)
 
 class CL(box2d.b2ContactListener):
 	def Result(self, result):
