@@ -110,9 +110,9 @@ class Robot(object):
         self.i = i
     def to_dict(self):
         roboDict = {}
-        roboDict['position'] = self.position
+        roboDict['position'] = (self.body.position.x, self.body.position.y)
         roboDict['rotation'] = self.gyro()
-        roboDict['turrent_angle'] = self.get_turrentangle()
+        roboDict['turret_angle'] = self.get_turretangle()
         return roboDict
 
     def gyro(self):
@@ -510,7 +510,7 @@ class World(object):
 
     def to_json(self):
         bullets = [b.to_dict() for b in self.bullets]
-        robots = [r.to_dict() for r in self.robots.items()]
+        robots = [r.to_dict() for r in self.robots.values()]
         sprites = [s.to_dict() for s in self.sprites]
         worldDict = {
                 'bullets': bullets,
