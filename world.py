@@ -201,7 +201,7 @@ class Bullet(object):
         bulletDict = {}
         bulletDict['position'] = pos_tuple_scale(self.body.position)
         bulletDict['angle'] = self.body.angle
-        bulletDict['exploding'] = self._exploding
+        bulletDict['exploding'] = 0 if not self._exploding else self._exploding
         return bulletDict
 
     def explode(self):
