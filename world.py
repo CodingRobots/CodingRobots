@@ -34,6 +34,12 @@ def pos_tuple_scale(pos):
     return ((pos.x+min_x)*50./min_x, (pos.y+min_y)*50./min_y)
 
 
+def size_tuple_scale(pos_x, pos_y):
+    min_x = 30
+    min_y = 25
+    return (pos_x*100./min_x, pos_y*100./min_y)
+
+
 class Robot(object):
     nrobots = 0
     def __init__(self, wld, kind, name, pos, ang):
@@ -246,8 +252,9 @@ class Wall(object):
     def to_dict(self):
         wallDict = {}
         wallDict['position'] = pos_tuple_scale(self.body.position)
-        wallDict['width'] = self.width
-        wallDict['height'] = self.height
+        (width, height) = size_tuple_scale(self.width, self.height)
+        wallDict['width'] = width
+        wallDict['height'] = height
         return wallDict
 
 class World(object):
@@ -258,6 +265,7 @@ class World(object):
         self.robots = {}
         self.bullets = []
         self.sprites = {}
+        self.walls = []
         self.to_destroy = []
 
         halfx = 30
@@ -289,10 +297,10 @@ class World(object):
         ahx = self.ahalfx
         ahy = self.ahalfy
 
-        wl = Wall(self.w, (-ahx, 0), (1, ahy+1))
-        wl = Wall(self.w, (ahx, 0), (1, ahy+1))
-        wl = Wall(self.w, (0, ahy), (ahx+1, 1))
-        wl = Wall(self.w, (0, -ahy), (ahx+1, 1))
+        self.walls.append(Wall(self.w, (-ahx, 0), (1, ahy+1)))
+        self.walls.append(Wall(self.w, (ahx, 0), (1, ahy+1)))
+        self.walls.append(Wall(self.w, (0, ahy), (ahx+1, 1)))
+        self.walls.append(Wall(self.w, (0, -ahy), (ahx+1, 1)))
 
         for block in range(5):
             #self.makeblock()
@@ -522,10 +530,12 @@ class World(object):
         bullets = [b.to_dict() for b in self.bullets]
         robots = [r.to_dict() for r in self.robots.values()]
         sprites = [s.to_dict() for s in self.sprites]
+        walls = [w.to_dict() for w in self.walls]
         worldDict = {
                 'bullets': bullets,
                 'robots': robots,
-                'sprites': sprites
+                'sprites': sprites,
+                'walls': walls,
                 }
         return json.dumps(worldDict)
 
