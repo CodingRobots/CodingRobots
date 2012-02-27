@@ -31,7 +31,7 @@ view = viewselect.get_view_module()
 def pos_tuple_scale(pos):
     min_x = 30
     min_y = 25
-    return ((pos.x+min_x)*100./min_x, (pos.y+min_y)*100./min_y)
+    return ((pos.x+min_x)*50./min_x, (pos.y+min_y)*50./min_y)
 
 
 class Robot(object):
