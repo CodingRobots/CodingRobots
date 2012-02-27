@@ -235,6 +235,8 @@ class Game(object):
 
 
     def finish(self):
+        worldJson = self.w.to_json(-1)
+        self.mc.set('%s' % self.game_id, worldJson)
         print 'FINISHING'
 
         models = self.models

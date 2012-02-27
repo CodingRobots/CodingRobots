@@ -465,7 +465,7 @@ class World(object):
 
             if model.body.userData['kind'] == 'robot':
                 self.w.DestroyBody(model.turret)
-                del self.robots[model.name]
+                #del self.robots[model.name]
             #print 's1', self.v.sprites
             #print 'destroying', id(body)
             self.w.DestroyBody(body)
