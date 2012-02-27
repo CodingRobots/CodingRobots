@@ -226,7 +226,7 @@ class Game(object):
         w.step()
         #Send shit to memcached
         worldJson = w.to_json()
-        self.mc.set('world_state_%s' % self.gameID, worldJson)
+        self.mc.set('world_state_%s' % self.game_id, worldJson)
         if not rnd%60:
             print '%s seconds (%s real)' % (rnd/60, int(time.time())-self.t0)
         self.rnd += 1
