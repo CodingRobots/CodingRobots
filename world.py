@@ -114,11 +114,13 @@ class Robot(object):
 
         i = wld.v.addrobotinfo(self.n, name)
         self.i = i
+
     def to_dict(self):
         roboDict = {}
         roboDict['position'] = pos_tuple_scale(self.body.position)
         roboDict['rotation'] = self.gyro()
         roboDict['health'] = self.health
+        roboDict['name'] = self.name
         roboDict['turret_angle'] = self.get_turretangle()
         return roboDict
 
