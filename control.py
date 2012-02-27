@@ -83,6 +83,7 @@ def get_response(r, sensors):
 
 def communicate(r):
     while True:
+        sleep(0.015)
         line = sys.stdin.readline().strip()
         if line == 'FINISH':
             break
