@@ -526,7 +526,7 @@ class World(object):
                 #print name, 'shoots'
                 self.makebullet(name)
 
-    def to_json(self):
+    def to_json(self, timeleft):
         bullets = [b.to_dict() for b in self.bullets]
         robots = [r.to_dict() for r in self.robots.values()]
         sprites = [s.to_dict() for s in self.sprites]
@@ -536,6 +536,7 @@ class World(object):
                 'robots': robots,
                 'sprites': sprites,
                 'walls': walls,
+                'time': timeleft,
                 }
         return json.dumps(worldDict)
 

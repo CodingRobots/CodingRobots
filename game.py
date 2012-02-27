@@ -225,10 +225,12 @@ class Game(object):
 
         w.step()
         #Send shit to memcached
-        worldJson = w.to_json()
+        worldJson = w.to_json(conf.maxtime - rnd/60)
         self.mc.set('%s' % self.game_id, worldJson)
-        if not rnd%60:
-            print '%s seconds (%s real)' % (rnd/60, int(time.time())-self.t0)
+
+        # Maybe turn this into a log later
+        #if not rnd%60:
+        #    print '%s seconds (%s real)' % (rnd/60, int(time.time())-self.t0)
         self.rnd += 1
 
 
