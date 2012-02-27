@@ -118,6 +118,7 @@ class Robot(object):
         roboDict = {}
         roboDict['position'] = pos_tuple_scale(self.body.position)
         roboDict['rotation'] = self.gyro()
+        roboDict['health'] = self.health
         roboDict['turret_angle'] = self.get_turretangle()
         return roboDict
 
