@@ -192,7 +192,7 @@ class Bullet(object):
         self.v = v
     def to_dict(self):
         bulletDict = {}
-        bulletDict['position'] = self.body.position
+        bulletDict['position'] = (self.body.position.x, self.body.position.y)
         bulletDict['angle'] = self.body.angle
         bulletDict['exploding'] = self._exploding
         return bulletDict
@@ -236,7 +236,7 @@ class Wall(object):
         self.v = v
     def to_dict(self):
         wallDict = {}
-        wallDict['position'] = self.body.position
+        wallDict['position'] = (self.body.position.x, self.body.position.y)
         wallDict['width'] = self.width
         wallDict['height'] = self.height
         return wallDict
@@ -511,7 +511,7 @@ class World(object):
 
     def to_json(self):
         bullets = [b.to_dict() for b in self.bullets]
-        robots = [r.to_dict() for r in self.robots.items()]
+        robots = [r.to_dict() for r in self.robots.values()]
         sprites = [s.to_dict() for s in self.sprites]
         worldDict = {
                 'bullets': bullets,
