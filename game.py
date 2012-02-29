@@ -32,7 +32,7 @@ import conf
 import memcache
 
 class Game(object):
-    def __init__(self, testmode=False, tournament=None, gameID=0, robots=[]):
+    def __init__(self, testmode=False, tournament=None, gameID='', robots=[]):
         self.testmode = testmode
         self.tournament = tournament
         self.game_id = gameID
