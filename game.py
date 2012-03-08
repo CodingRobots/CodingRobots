@@ -233,7 +233,7 @@ class Game(object):
 
         w.step()
         #Send shit to nosql
-        worldData = w.to_dict()
+        worldData = self.w.to_dict()
         worldData['time'] = conf.maxtime - rnd/60
         worldData['_id'] = 1
         self.mc[self.game_id].update({}, worldData, upsert=True)
@@ -245,10 +245,10 @@ class Game(object):
 
 
     def finish(self):
-        worldData = w.to_dict()
+        worldData = self.w.to_dict()
         worldData['id'] = self.game_id
         worldData['time'] = -1
-        self.mc.insert(worldData)
+        self.mc[self.game_id].update({}, worldData, upsert=True)
         print 'FINISHING'
 
         models = self.models
