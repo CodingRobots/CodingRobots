@@ -75,7 +75,7 @@ def get_response(r, sensors):
     try:
         r.sensors = sensors
         r.respond()
-    except Exception, e:
+    except:
         r.err()
         import traceback
         tb = traceback.format_exc()
