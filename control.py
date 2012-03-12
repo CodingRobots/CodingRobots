@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Pybotwar.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import mock
 import os
 from threading import Thread
 from time import sleep
@@ -105,6 +105,51 @@ def communicate(r):
                 pass
             break
 
+
+class run_decorator(object):
+    def __init__(self, func):
+        self._callable = func
+
+    def __call__(self, *args, **kw):
+        with mock.patch('__builtin__.__import__', new=my_import):
+            return self._callable(*args, **kw)
+
+normal_import = __builtins__.__import__
+
+def my_import(name, globals={}, locals={}, fromlist=[], level=-1):
+    white_list = {'time':None, 'random':None, 'robot':None,
+                '__future__':['division'], 'warnings':None,
+                'types':None, 'math':None, 'os':['urandom'],
+                'binascii':None, '_random':None, 'hashlib':None,
+                '_md5':None, '_sha':None, '_sha256':None, '_sha512':None}
+    if modname:
+        logging.debug('appending %s to white list' % (modname))
+        white_list[modname] = None
+    logging.debug("importing %s from %s at level %s" % (fromlist, name, level))
+    if name in white_list:
+        if fromlist:
+            for imp in fromlist:
+
+                if white_list[name] and imp not in white_list[name]:
+                    break
+            else:
+                return normal_import(name, globals, locals, fromlist, level)
+            logging.debug("That module isn't white listed!!!")
+        else:
+            return normal_import(name, globals, locals, fromlist, level)
+    else:
+        logging.debug("That package isn't white listed!!!")
+    return None
+
+@run_decorator
+def start_bot(modname, robotname):
+    mod = __import__(modname)
+    r = mod.TheRobot(robotname)
+
+    r.logfile = logfile
+
+    r.initialize()
+    return r
 
 def build_robot(modname, robotname, testmode, rbox):
 
