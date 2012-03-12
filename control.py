@@ -24,8 +24,8 @@ from util import defaultNonedict
 
 import conf
 
-
-_overtime_count = 0
+import logging
+logging.basicConfig(filename='robot.log',level=logging.DEBUG)
 
 def loop(r, i):
     data = i.split('|')
@@ -161,13 +161,7 @@ def build_robot(modname, robotname, testmode, rbox):
         logfile = None
 
     try:
-        mod = __import__(modname)
-        r = mod.TheRobot(robotname)
-
-        r.logfile = logfile
-
-        r.initialize()
-
+        r = start_bot(modname, robotname)
     except:
         rbox.append(None)
 
