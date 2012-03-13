@@ -121,7 +121,8 @@ def my_import(name, globals={}, locals={}, fromlist=[], level=-1):
                 '__future__':['division'], 'warnings':None,
                 'types':None, 'math':None, 'os':['urandom'],
                 'binascii':None, '_random':None, 'hashlib':None,
-                '_md5':None, '_sha':None, '_sha256':None, '_sha512':None}
+                '_md5':None, '_sha':None, '_sha256':None,
+                '_sha512':None, 'util': None}
     if modname:
         logging.debug('appending %s to white list' % (modname))
         white_list[modname] = None
