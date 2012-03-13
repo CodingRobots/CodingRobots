@@ -143,7 +143,7 @@ def my_import(name, globals={}, locals={}, fromlist=[], level=-1):
     return None
 
 @run_decorator
-def start_bot(modname, robotname):
+def start_bot(modname, robotname,logfile):
     mod = __import__(modname)
     r = mod.TheRobot(robotname)
 
@@ -162,7 +162,7 @@ def build_robot(modname, robotname, testmode, rbox):
         logfile = None
 
     try:
-        r = start_bot(modname, robotname)
+        r = start_bot(modname, robotname, logfile)
     except:
         rbox.append(None)
 
