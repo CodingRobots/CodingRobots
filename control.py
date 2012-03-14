@@ -14,9 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Pybotwar.  If not, see <http://www.gnu.org/licenses/>.
-
-import mock
 import os
+activate_this = os.environ.get('OPENSHIFT_APP_DIR') + 'virtenv/bin/activate_this.py'
+execfile(activate_this, dict(__file__=activate_this))
+import mock
 from threading import Thread
 from time import sleep
 
